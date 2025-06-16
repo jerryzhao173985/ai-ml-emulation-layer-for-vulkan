@@ -1,0 +1,93 @@
+/*
+ * SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ */
+
+#pragma once
+
+/*******************************************************************************
+ * Includes
+ *******************************************************************************/
+
+#include "compute.hpp"
+#include "tensor.hpp"
+
+#include <map>
+#include <memory>
+#include <vector>
+#include <vulkan/vulkan_core.h>
+
+namespace mlsdk::el::compute {
+
+/*******************************************************************************
+ * MemoryPlanner
+ *******************************************************************************/
+
+class MemoryPlanner {
+  public:
+    explicit MemoryPlanner(const std::shared_ptr<GraphPipeline> &_graphPipeline);
+
+    virtual VkMemoryRequirements getGraphPipelineSessionMemoryRequirements() const = 0;
+    virtual void bindGraphPipelineSessionMemory(VkDeviceMemory memory, VkDeviceSize offset,
+                                                const ComputeDescriptorSetMap &descriptorSets) = 0;
+
+  protected:
+    std::tuple<VkDeviceSize, uint32_t> getGraphPipelineSessionMemoryRequirementsPartial() const;
+
+    std::shared_ptr<GraphPipeline> graphPipeline;
+    std::tuple<VkDeviceSize, uint32_t> memoryRequirements;
+};
+
+/*******************************************************************************
+ * LinearMemoryPlanner
+ *******************************************************************************/
+
+class LinearMemoryPlanner : public MemoryPlanner {
+  public:
+    using MemoryPlanner::MemoryPlanner;
+
+    VkMemoryRequirements getGraphPipelineSessionMemoryRequirements() const override;
+    void bindGraphPipelineSessionMemory(VkDeviceMemory memory, VkDeviceSize offset,
+                                        const ComputeDescriptorSetMap &descriptorSets) override;
+};
+
+/*******************************************************************************
+ * BestFitMemoryPlanner
+ *******************************************************************************/
+
+class BestFitMemoryPlanner : public MemoryPlanner {
+  public:
+    explicit BestFitMemoryPlanner(const std::shared_ptr<GraphPipeline> &_graphPipeline);
+
+    VkMemoryRequirements getGraphPipelineSessionMemoryRequirements() const override;
+    void bindGraphPipelineSessionMemory(VkDeviceMemory memory, VkDeviceSize offset,
+                                        const ComputeDescriptorSetMap &descriptorSets) override;
+
+  protected:
+    void bestFitAllocation();
+
+    VkDeviceSize memorySize;
+
+    const std::vector<std::shared_ptr<TensorDescriptor>> tensors;
+    const std::map<std::shared_ptr<TensorDescriptor>, std::set<std::shared_ptr<TensorDescriptor>>> safeToReuse;
+    const std::map<std::shared_ptr<TensorDescriptor>, std::vector<std::shared_ptr<TensorDescriptor>>> allAlternatives;
+    std::map<std::shared_ptr<TensorDescriptor>, VkDeviceSize> tensorOffsets;
+
+  private:
+    void allocate(const std::shared_ptr<TensorDescriptor> &tensor, VkDeviceSize memoryAddress);
+    std::shared_ptr<TensorDescriptor> findAlternativeTensor(
+        const std::shared_ptr<TensorDescriptor> &tensor,
+        const std::map<std::shared_ptr<TensorDescriptor>,
+                       std::shared_ptr<std::vector<std::shared_ptr<TensorDescriptor>>>> &tensorOccupation);
+    bool isAllocated(const std::shared_ptr<TensorDescriptor> &tensor) const;
+    bool isSafeToReuse(const std::shared_ptr<std::vector<std::shared_ptr<TensorDescriptor>>> &occupationList,
+                       const std::shared_ptr<TensorDescriptor> &tensor) const;
+    std::map<std::shared_ptr<TensorDescriptor>, std::set<std::shared_ptr<TensorDescriptor>>> liveTensorAnalysis() const;
+    std::vector<std::shared_ptr<TensorDescriptor>> createInitialTensorOrder() const;
+    std::map<std::shared_ptr<TensorDescriptor>, std::vector<std::shared_ptr<TensorDescriptor>>>
+    createAllAlternatives() const;
+    std::vector<ComputePipelineBase *> getTopologicalOrder() const;
+};
+
+} // namespace mlsdk::el::compute

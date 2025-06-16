@@ -1,0 +1,48 @@
+;
+; SPDX-FileCopyrightText: Copyright 2023-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+; SPDX-License-Identifier: Apache-2.0
+;
+                     OpCapability VulkanMemoryModel
+                     OpCapability Shader
+                     OpCapability Int8
+                     OpCapability GraphARM
+                     OpCapability TensorsARM
+                     OpExtension "SPV_ARM_graph"
+                     OpExtension "SPV_ARM_tensors"
+             %tosa = OpExtInstImport "TOSA.001000.1"
+                     OpMemoryModel Logical Vulkan
+                     OpDecorate %input_tensor_ptr DescriptorSet 0
+                     OpDecorate %input_tensor_ptr Binding 0
+                     OpDecorate %output_tensor_ptr0 DescriptorSet 0
+                     OpDecorate %output_tensor_ptr0 Binding 1
+                     OpDecorate %output_tensor_ptr1 DescriptorSet 0
+                     OpDecorate %output_tensor_ptr1 Binding 2
+                     OpDecorate %output_tensor_ptr2 DescriptorSet 0
+                     OpDecorate %output_tensor_ptr2 Binding 3
+             %uint = OpTypeInt 32 0
+           %uint_0 = OpConstant %uint 0
+           %uint_1 = OpConstant %uint 1
+           %uint_2 = OpConstant %uint 2
+           %uint_4 = OpConstant %uint 4
+             %int8 = OpTypeInt 8 0
+       %int8tensor = OpTypeTensorARM %int8 %uint_4
+     %const_tensor = OpGraphConstantARM %int8tensor 0
+%ptr_UniformConstant_int8tensor = OpTypePointer UniformConstant %int8tensor
+%graph_1I_T4I8_T4I8 = OpTypeGraphARM 1 %int8tensor %int8tensor %int8tensor %int8tensor
+ %input_tensor_ptr = OpVariable %ptr_UniformConstant_int8tensor UniformConstant
+%output_tensor_ptr0 = OpVariable %ptr_UniformConstant_int8tensor UniformConstant
+%output_tensor_ptr1 = OpVariable %ptr_UniformConstant_int8tensor UniformConstant
+%output_tensor_ptr2 = OpVariable %ptr_UniformConstant_int8tensor UniformConstant
+     %array_uint_1 = OpTypeArray %uint %uint_1
+       %shape_1D_4 = OpConstantComposite %array_uint_1 %uint_4
+%tensor_uint_rank1_shape4 = OpTypeTensorARM %uint %uint_1 %shape_1D_4
+    %start = OpConstantComposite %tensor_uint_rank1_shape4 %uint_0 %uint_4 %uint_4 %uint_1
+    %size = OpConstantComposite %tensor_uint_rank1_shape4 %uint_1 %uint_2 %uint_2 %uint_2
+                     OpGraphEntryPointARM %graph "no-op" %input_tensor_ptr %output_tensor_ptr0 %output_tensor_ptr1 %output_tensor_ptr2
+            %graph = OpGraphARM %graph_1I_T4I8_T4I8
+               %in = OpGraphInputARM %int8tensor %uint_0
+            %slice = OpExtInst %int8tensor %tosa SLICE %in %start %size
+                     OpGraphSetOutputARM %slice %uint_0
+                     OpGraphSetOutputARM %in %uint_1
+                     OpGraphSetOutputARM %const_tensor %uint_2
+                     OpGraphEndARM

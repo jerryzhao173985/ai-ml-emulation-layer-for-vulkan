@@ -1,0 +1,59 @@
+;
+; SPDX-FileCopyrightText: Copyright 2023-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+; SPDX-License-Identifier: Apache-2.0
+;
+               OpCapability GraphARM
+               OpCapability TensorsARM
+               OpCapability Shader
+               OpCapability VulkanMemoryModel
+               OpCapability Int8
+               OpCapability Int16
+               OpCapability Int64
+               OpCapability Matrix
+               OpExtension "SPV_ARM_graph"
+               OpExtension "SPV_ARM_tensors"
+               OpExtension "SPV_KHR_vulkan_memory_model"
+         %24 = OpExtInstImport "TOSA.001000.1"
+               OpMemoryModel Logical Vulkan
+               OpName %main_arg_0 "main_arg_0"
+               OpName %main_arg_1 "main_arg_1"
+               OpName %main_res_0 "main_res_0"
+               OpName %main_res_1 "main_res_1"
+               OpDecorate %main_arg_0 Binding 0
+               OpDecorate %main_arg_0 DescriptorSet 0
+               OpDecorate %main_arg_1 Binding 1
+               OpDecorate %main_arg_1 DescriptorSet 0
+               OpDecorate %main_res_0 Binding 2
+               OpDecorate %main_res_0 DescriptorSet 0
+               OpDecorate %main_res_1 Binding 3
+               OpDecorate %main_res_1 DescriptorSet 0
+      %float = OpTypeFloat 32
+       %uint = OpTypeInt 32 0
+     %uint_3 = OpConstant %uint 3
+%_arr_uint_uint_3 = OpTypeArray %uint %uint_3
+     %uint_0 = OpConstant %uint 0
+     %uint_1 = OpConstant %uint 1
+     %uint_4 = OpConstant %uint 4
+  %uint_4096 = OpConstant %uint 4096
+          %7 = OpConstantComposite %_arr_uint_uint_3 %uint_1 %uint_4 %uint_4096
+          %2 = OpTypeTensorARM %float %uint_3 %7
+%_ptr_UniformConstant_2 = OpTypePointer UniformConstant %2
+ %main_arg_0 = OpVariable %_ptr_UniformConstant_2 UniformConstant
+ %main_arg_1 = OpVariable %_ptr_UniformConstant_2 UniformConstant
+ %main_res_0 = OpVariable %_ptr_UniformConstant_2 UniformConstant
+ %main_res_1 = OpVariable %_ptr_UniformConstant_2 UniformConstant
+         %16 = OpTypeGraphARM 2 %2 %2 %2 %2
+       %bool = OpTypeBool
+       %true = OpConstantTrue %bool
+      %false = OpConstantFalse %bool
+ %_struct_22 = OpTypeStruct %2 %2
+               OpGraphEntryPointARM %15 "main" %main_arg_0 %main_arg_1 %main_res_0 %main_res_1
+         %15 = OpGraphARM %16
+         %17 = OpGraphInputARM %2 %uint_0
+         %18 = OpGraphInputARM %2 %uint_1
+         %23 = OpExtInst %_struct_22 %24 FFT2D %true %false %17 %18
+         %25 = OpCompositeExtract %2 %23 0
+         %26 = OpCompositeExtract %2 %23 1
+               OpGraphSetOutputARM %25 %uint_0
+               OpGraphSetOutputARM %26 %uint_1
+               OpGraphEndARM

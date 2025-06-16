@@ -1,0 +1,35 @@
+;
+; SPDX-FileCopyrightText: Copyright 2023-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+; SPDX-License-Identifier: Apache-2.0
+;
+                     OpCapability VulkanMemoryModel
+                     OpCapability Shader
+                     OpCapability GraphARM
+                     OpCapability TensorsARM
+                     OpExtension "SPV_ARM_graph"
+                     OpExtension "SPV_ARM_tensors"
+             %tosa = OpExtInstImport "TOSA.001000.1"
+                     OpMemoryModel Logical Vulkan
+                     OpDecorate %input_tensor_ptr0 DescriptorSet 0
+                     OpDecorate %input_tensor_ptr0 Binding 0
+                     OpDecorate %input_tensor_ptr1 DescriptorSet 0
+                     OpDecorate %input_tensor_ptr1 Binding 1
+                     OpDecorate %output_tensor_ptr DescriptorSet 0
+                     OpDecorate %output_tensor_ptr Binding 2
+             %uint = OpTypeInt 32 0
+           %uint_0 = OpConstant %uint 0
+           %uint_1 = OpConstant %uint 1
+           %uint_4 = OpConstant %uint 4
+      %int32tensor = OpTypeTensorARM %uint %uint_4
+%ptr_UniformConstant_int32tensor = OpTypePointer UniformConstant %int32tensor
+%graph_1I_T4I8_T4I8 = OpTypeGraphARM 2 %int32tensor %int32tensor %int32tensor
+%input_tensor_ptr0 = OpVariable %ptr_UniformConstant_int32tensor UniformConstant
+%input_tensor_ptr1 = OpVariable %ptr_UniformConstant_int32tensor UniformConstant
+%output_tensor_ptr = OpVariable %ptr_UniformConstant_int32tensor UniformConstant
+                     OpGraphEntryPointARM %graph "maximum" %input_tensor_ptr0 %input_tensor_ptr1 %output_tensor_ptr
+            %graph = OpGraphARM %graph_1I_T4I8_T4I8
+              %in0 = OpGraphInputARM %int32tensor %uint_0
+              %in1 = OpGraphInputARM %int32tensor %uint_1
+          %maximum = OpExtInst %int32tensor %tosa MAXIMUM %uint_1 %in0 %in1
+                     OpGraphSetOutputARM %maximum %uint_0
+                     OpGraphEndARM

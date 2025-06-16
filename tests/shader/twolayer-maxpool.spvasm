@@ -1,0 +1,48 @@
+;
+; SPDX-FileCopyrightText: Copyright 2023-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+; SPDX-License-Identifier: Apache-2.0
+;
+                     OpCapability VulkanMemoryModel
+                     OpCapability Shader
+                     OpCapability Int8
+                     OpCapability GraphARM
+                     OpCapability TensorsARM
+                     OpExtension "SPV_ARM_graph"
+                     OpExtension "SPV_ARM_tensors"
+             %tosa = OpExtInstImport "TOSA.001000.1"
+                     OpMemoryModel Logical Vulkan
+                     OpDecorate %input_tensor_ptr DescriptorSet 0
+                     OpDecorate %input_tensor_ptr Binding 0
+                     OpDecorate %output_tensor_ptr DescriptorSet 0
+                     OpDecorate %output_tensor_ptr Binding 1
+             %uint = OpTypeInt 32 0
+           %uint_0 = OpConstant %uint 0
+           %uint_1 = OpConstant %uint 1
+           %uint_2 = OpConstant %uint 2
+           %uint_3 = OpConstant %uint 3
+           %uint_4 = OpConstant %uint 4
+           %uint_8 = OpConstant %uint 8
+             %int8 = OpTypeInt 8 0
+     %array_uint_1 = OpTypeArray %uint %uint_1
+       %shape_1D_2 = OpConstantComposite %array_uint_1 %uint_2
+       %shape_1D_4 = OpConstantComposite %array_uint_1 %uint_4
+%tensor_uint_rank1_shape2 = OpTypeTensorARM %uint %uint_1 %shape_1D_2
+%tensor_uint_rank1_shape4 = OpTypeTensorARM %uint %uint_1 %shape_1D_4
+   %maxpool_kernel = OpConstantComposite %tensor_uint_rank1_shape2 %uint_2 %uint_2
+   %maxpool_stride = OpConstantComposite %tensor_uint_rank1_shape2 %uint_2 %uint_2
+      %maxpool_pad = OpConstantComposite %tensor_uint_rank1_shape4 %uint_0 %uint_0 %uint_0 %uint_0
+       %int8tensor = OpTypeTensorARM %int8 %uint_4
+     %array_uint_4 = OpTypeArray %uint %uint_4
+ %shape_1D_1_8_8_3 = OpConstantComposite %array_uint_4 %uint_1 %uint_8 %uint_8 %uint_3
+      %int8tensor2 = OpTypeTensorARM %int8 %uint_4 %shape_1D_1_8_8_3
+%ptr_UniformConstant_int8tensor = OpTypePointer UniformConstant %int8tensor
+%graph_1I_T4I8_T4I8 = OpTypeGraphARM 1 %int8tensor %int8tensor
+ %input_tensor_ptr = OpVariable %ptr_UniformConstant_int8tensor UniformConstant
+%output_tensor_ptr = OpVariable %ptr_UniformConstant_int8tensor UniformConstant
+                     OpGraphEntryPointARM %graph "maxpool" %input_tensor_ptr %output_tensor_ptr
+            %graph = OpGraphARM %graph_1I_T4I8_T4I8
+               %in = OpGraphInputARM %int8tensor %uint_0
+          %maxpool = OpExtInst %int8tensor2 %tosa MAX_POOL2D %maxpool_kernel %maxpool_stride %maxpool_pad %uint_1 %in
+         %maxpool2 = OpExtInst %int8tensor %tosa MAX_POOL2D %maxpool_kernel %maxpool_stride %maxpool_pad %uint_1 %maxpool
+                     OpGraphSetOutputARM %maxpool2 %uint_0
+                     OpGraphEndARM
