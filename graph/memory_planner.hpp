@@ -52,6 +52,8 @@ class LinearMemoryPlanner : public MemoryPlanner {
                                         const ComputeDescriptorSetMap &descriptorSets) override;
 };
 
+using Tensors = std::vector<std::shared_ptr<TensorDescriptor>>;
+
 /*******************************************************************************
  * BestFitMemoryPlanner
  *******************************************************************************/
@@ -69,24 +71,22 @@ class BestFitMemoryPlanner : public MemoryPlanner {
 
     VkDeviceSize memorySize;
 
-    const std::vector<std::shared_ptr<TensorDescriptor>> tensors;
-    const std::map<std::shared_ptr<TensorDescriptor>, std::set<std::shared_ptr<TensorDescriptor>>> safeToReuse;
-    const std::map<std::shared_ptr<TensorDescriptor>, std::vector<std::shared_ptr<TensorDescriptor>>> allAlternatives;
+    const Tensors tensors;
+    const std::map<std::shared_ptr<TensorDescriptor>, Tensors> safeToReuse;
+    const std::map<std::shared_ptr<TensorDescriptor>, Tensors> allAlternatives;
     std::map<std::shared_ptr<TensorDescriptor>, VkDeviceSize> tensorOffsets;
 
   private:
     void allocate(const std::shared_ptr<TensorDescriptor> &tensor, VkDeviceSize memoryAddress);
     std::shared_ptr<TensorDescriptor> findAlternativeTensor(
         const std::shared_ptr<TensorDescriptor> &tensor,
-        const std::map<std::shared_ptr<TensorDescriptor>,
-                       std::shared_ptr<std::vector<std::shared_ptr<TensorDescriptor>>>> &tensorOccupation);
+        const std::map<std::shared_ptr<TensorDescriptor>, std::shared_ptr<Tensors>> &tensorOccupation);
     bool isAllocated(const std::shared_ptr<TensorDescriptor> &tensor) const;
-    bool isSafeToReuse(const std::shared_ptr<std::vector<std::shared_ptr<TensorDescriptor>>> &occupationList,
+    bool isSafeToReuse(const std::shared_ptr<Tensors> &occupationList,
                        const std::shared_ptr<TensorDescriptor> &tensor) const;
-    std::map<std::shared_ptr<TensorDescriptor>, std::set<std::shared_ptr<TensorDescriptor>>> liveTensorAnalysis() const;
-    std::vector<std::shared_ptr<TensorDescriptor>> createInitialTensorOrder() const;
-    std::map<std::shared_ptr<TensorDescriptor>, std::vector<std::shared_ptr<TensorDescriptor>>>
-    createAllAlternatives() const;
+    std::map<std::shared_ptr<TensorDescriptor>, Tensors> liveTensorAnalysis() const;
+    Tensors createInitialTensorOrder() const;
+    std::map<std::shared_ptr<TensorDescriptor>, Tensors> createAllAlternatives() const;
     std::vector<ComputePipelineBase *> getTopologicalOrder() const;
 };
 
