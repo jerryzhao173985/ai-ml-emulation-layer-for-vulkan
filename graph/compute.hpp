@@ -1137,7 +1137,8 @@ class GraphPipeline {
     // Tensors allocated in session ram
     std::shared_ptr<TensorDescriptor> makeTensor(const VkFormat format, const std::vector<int64_t> &dimensions = {},
                                                  const std::vector<int64_t> &strides = {});
-    const std::set<std::shared_ptr<TensorDescriptor>> &getTensorSet() const;
+
+    const std::vector<std::shared_ptr<TensorDescriptor>> &getTensors() const;
 
     // Make descriptor sets
     ComputeDescriptorSetMap makeConstantsDescriptorSets() const;
@@ -1414,6 +1415,8 @@ class GraphPipeline {
 
     // Set of all tensors allocated in session ram
     std::set<std::shared_ptr<TensorDescriptor>> tensorSet;
+
+    std::vector<std::shared_ptr<TensorDescriptor>> tensors;
 
     // Virtual pipelines used to track input and output tensors
     ComputePipelineBase inputs{nullptr};

@@ -2248,12 +2248,17 @@ std::shared_ptr<TensorDescriptor> GraphPipeline::makeTensor(const VkFormat forma
                                                             const std::vector<int64_t> &dimensions,
                                                             const std::vector<int64_t> &strides) {
     auto tensor = std::make_shared<TensorDescriptor>(loader, physicalDevice, device, format, dimensions, strides);
-    tensorSet.insert(tensor);
+
+    auto [iterator, inserted] = tensorSet.insert(tensor);
+
+    if (inserted) {
+        tensors.push_back(tensor);
+    }
 
     return tensor;
 }
 
-const std::set<std::shared_ptr<TensorDescriptor>> &GraphPipeline::getTensorSet() const { return tensorSet; }
+const std::vector<std::shared_ptr<TensorDescriptor>> &GraphPipeline::getTensors() const { return tensors; }
 
 ComputeDescriptorSetMap GraphPipeline::makeSessionRamDescriptorSets() const {
     TensorDescriptorMap filter;
