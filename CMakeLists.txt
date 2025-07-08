@@ -15,6 +15,10 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+if(DEFINED ANDROID_ABI)
+    message(WARNING "Building for Android is currently an experimental feature.")
+endif()
+
 include(CTest)
 configure_file(CTestCustom.cmake CTestCustom.cmake)
 
@@ -131,4 +135,6 @@ endif()
 if(ML_SDK_BUILD_DOCS OR VMEL_BUILD_DOCS)
     include(docs/docs.cmake)
 endif()
+
 unset(VMEL_BUILD_DOCS CACHE)
+unset(ANDROID_ABI CACHE)
